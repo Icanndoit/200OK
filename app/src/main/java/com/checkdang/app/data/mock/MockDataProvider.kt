@@ -86,7 +86,7 @@ object MockDataProvider {
         return AIAnalysisResult(
             painRecord     = record,
             summary        = "${partLabel} 통증 패턴 분석 결과, 최근 혈당 변동 및 수면 부족과의 연관성이 감지되었습니다. " +
-                             "통증 강도 ${record.intensity}/10 수준으로 지속적인 모니터링이 권장됩니다.",
+                             "통증 강도 ${record.intensity}/5 수준으로 지속적인 모니터링이 권장됩니다.",
             correlations   = correlations,
             recommendation = "규칙적인 스트레칭과 충분한 수면(7~8시간)을 유지하세요. " +
                              "혈당을 안정적으로 관리하면 신경 관련 통증 완화에 도움이 될 수 있습니다. " +

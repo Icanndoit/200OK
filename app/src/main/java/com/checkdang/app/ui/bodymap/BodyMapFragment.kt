@@ -56,8 +56,6 @@ class BodyMapFragment : Fragment() {
         binding.bodyMapView.onPartSelected = { part ->
             binding.tvHint.text = "${part.label} 선택됨"
             binding.btnInputPain.isEnabled = true
-            PainInputBottomSheet.newInstance(part)
-                .show(childFragmentManager, "pain_input")
         }
 
         binding.btnInputPain.setOnClickListener {

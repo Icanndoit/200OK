@@ -12,7 +12,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
 import com.checkdang.app.R
 import com.checkdang.app.data.mock.SessionHolder
 import com.checkdang.app.data.mock.SocialProvider
@@ -191,12 +190,8 @@ class MenuFragment : Fragment() {
         binding.menuLogout.root.setOnClickListener   { showLogoutDialog() }
         binding.menuWithdraw.root.setOnClickListener { showWithdrawDialog() }
 
-        binding.menuProfile.root.setOnClickListener {
-            findNavController().navigate(R.id.action_menu_to_profile_edit)
-        }
-
         listOf(
-            binding.menuNotification, binding.menuUnit,
+            binding.menuProfile, binding.menuNotification, binding.menuUnit,
             binding.menuExport, binding.menuFaq, binding.menuSupport,
             binding.menuTerms, binding.menuPrivacy
         ).forEach { row ->
