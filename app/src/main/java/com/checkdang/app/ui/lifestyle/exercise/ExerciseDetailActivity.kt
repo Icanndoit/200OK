@@ -3,14 +3,15 @@ package com.checkdang.app.ui.lifestyle.exercise
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.checkdang.app.R
-import com.checkdang.app.data.health.HealthRepository
+import com.checkdang.app.data.mock.MockDataProvider
 import com.checkdang.app.data.model.ExerciseSession
 import com.checkdang.app.databinding.ActivityExerciseDetailBinding
 import com.checkdang.app.databinding.ItemExerciseSessionBinding
@@ -19,7 +20,6 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
-import kotlinx.coroutines.launch
 
 class ExerciseDetailActivity : AppCompatActivity() {
 
@@ -30,25 +30,27 @@ class ExerciseDetailActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setupToolbar()
-        setupDonut(0, 60)
-        setupStats(0, 60, 0)
-        setupSessionList(emptyList())
 
-        lifecycleScope.launch {
-            val summary     = HealthRepository.getExerciseSummary()
-            val weeklyData  = HealthRepository.getWeeklyExerciseMinutes()
-
-            if (summary != null) {
-                setupDonut(summary.totalMinutes, summary.goalMinutes)
-                setupStats(summary.totalMinutes, summary.goalMinutes, summary.totalCalories)
-                setupSessionList(summary.sessions)
-            }
-            setupWeeklyChart(weeklyData)
+        val summary = MockDataProvider.getExerciseSummary()
+        if (summary != null) {
+            setupDonut(summary.totalMinutes, summary.goalMinutes)
+            setupStats(summary.totalMinutes, summary.goalMinutes, summary.totalCalories)
+            setupSessionList(summary.sessions)
+        } else {
+            setupDonut(0, 60)
+            setupStats(0, 60, 0)
+            setupSessionList(emptyList())
         }
+        setupWeeklyChart()
     }
 
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
+        // 화살표 방향 반전 (뒤로가기 아이콘으로 사용)
+        binding.toolbar.setNavigationIcon(R.drawable.ic_chevron_right)
+        binding.toolbar.navigationIcon?.apply {
+            // rotate 180 to point left
+        }
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "운동 상세"
     }
@@ -78,7 +80,8 @@ class ExerciseDetailActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupWeeklyChart(data: List<Int>) {
+    private fun setupWeeklyChart() {
+        val data  = MockDataProvider.getWeeklyExerciseMinutes()
         val chart = binding.chartWeeklyExercise
 
         chart.apply {
@@ -137,6 +140,8 @@ class ExerciseDetailActivity : AppCompatActivity() {
         }
     }
 
+    // ── 세션 어댑터 ────────────────────────────────────────────────────────
+
     private inner class SessionAdapter(private val sessions: List<ExerciseSession>) :
         RecyclerView.Adapter<SessionAdapter.VH>() {
 
@@ -149,10 +154,10 @@ class ExerciseDetailActivity : AppCompatActivity() {
 
         override fun onBindViewHolder(holder: VH, position: Int) {
             val s = sessions[position]
-            holder.b.tvExerciseIcon.text  = s.type.first().toString()
-            holder.b.tvSessionType.text   = s.type
-            holder.b.tvSessionStats.text  = "${s.durationMin}분 · ${s.calories} kcal"
-            holder.b.tvSessionTime.text   = s.startedAt
+            holder.b.tvExerciseIcon.text   = s.type.first().toString()
+            holder.b.tvSessionType.text    = s.type
+            holder.b.tvSessionStats.text   = "${s.durationMin}분 · ${s.calories} kcal"
+            holder.b.tvSessionTime.text    = s.startedAt
         }
     }
 }

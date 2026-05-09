@@ -5,17 +5,14 @@ import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
 import com.checkdang.app.R
-import com.checkdang.app.data.health.HealthRepository
-import com.checkdang.app.data.model.SleepSummary
+import com.checkdang.app.data.mock.MockDataProvider
 import com.checkdang.app.databinding.ActivitySleepDetailBinding
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.ValueFormatter
-import kotlinx.coroutines.launch
 
 class SleepDetailActivity : AppCompatActivity() {
 
@@ -26,15 +23,14 @@ class SleepDetailActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setupToolbar()
-        setupSummaryEmpty()
 
-        lifecycleScope.launch {
-            val summary    = HealthRepository.getSleepSummary()
-            val weeklyData = HealthRepository.getWeeklySleepHours()
-
-            if (summary != null) setupSummaryCard(summary)
-            setupWeeklyChart(weeklyData)
+        val summary = MockDataProvider.getSleepSummary()
+        if (summary != null) {
+            setupSummaryCard(summary)
+        } else {
+            setupSummaryEmpty()
         }
+        setupWeeklyChart()
     }
 
     private fun setupToolbar() {
@@ -61,7 +57,7 @@ class SleepDetailActivity : AppCompatActivity() {
         setWeight(binding.viewRem,   1f / 3)
     }
 
-    private fun setupSummaryCard(s: SleepSummary) {
+    private fun setupSummaryCard(s: com.checkdang.app.data.model.SleepSummary) {
         val hours   = s.totalHours.toInt()
         val minutes = ((s.totalHours - hours) * 60).toInt()
         binding.tvSleepTotal.text  = "${hours}시간 ${minutes}분"
@@ -72,6 +68,7 @@ class SleepDetailActivity : AppCompatActivity() {
         binding.tvBedtime.text     = s.bedtime
         binding.tvWakeTime.text    = s.wakeTime
 
+        // 수면 단계 막대 가중치
         val total = s.deepHours + s.lightHours + s.remHours
         setWeight(binding.viewDeep,  s.deepHours  / total)
         setWeight(binding.viewLight, s.lightHours / total)
@@ -83,7 +80,8 @@ class SleepDetailActivity : AppCompatActivity() {
         view.requestLayout()
     }
 
-    private fun setupWeeklyChart(data: List<Float>) {
+    private fun setupWeeklyChart() {
+        val data  = MockDataProvider.getWeeklySleepHours()
         val chart = binding.chartWeeklySleep
 
         chart.apply {
@@ -94,7 +92,7 @@ class SleepDetailActivity : AppCompatActivity() {
             axisRight.isEnabled = false
         }
 
-        if (data.isEmpty() || data.all { it == 0f }) {
+        if (data.isEmpty()) {
             chart.setNoDataText("수면 기록이 없어요")
             chart.setNoDataTextColor(getColor(R.color.text_secondary))
             chart.clear()

@@ -11,8 +11,11 @@ import androidx.viewpager2.widget.ViewPager2
 import com.checkdang.app.R
 import com.checkdang.app.data.mock.SessionHolder
 import com.checkdang.app.data.mock.SocialProvider
+import androidx.lifecycle.lifecycleScope
 import com.checkdang.app.data.mock.UserStore
 import com.checkdang.app.data.mock.UserTier
+import kotlinx.coroutines.launch
+import com.checkdang.app.data.remote.ProfileApiClient
 import com.checkdang.app.databinding.ActivityOnboardingBinding
 import com.checkdang.app.ui.main.MainActivity
 
@@ -112,6 +115,16 @@ class OnboardingActivity : AppCompatActivity() {
             // isLoggedIn / tier / 토큰은 LoginActivity.callSocialLoginApi()에서 이미 설정됨
             UserStore.saveProfile(SessionHolder.authProvider, profile)
             UserStore.markRegistered(SessionHolder.authProvider)
+
+            SessionHolder.accessToken?.let { token ->
+                lifecycleScope.launch {
+                    runCatching {
+                        ProfileApiClient.saveProfile(token, profile)
+                    }.onFailure {
+                        android.util.Log.d("UserProfile", "프로필 서버 저장 실패: ${it.message}")
+                    }
+                }
+            }
         }
         startActivity(Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

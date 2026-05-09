@@ -47,21 +47,23 @@ object MockDataProvider {
 
     fun getGlucoseSummary(): GlucoseSummary? = null   // TODO(backend): 서버에서 오늘의 요약 로드
 
-    fun getLifestyleSummary(): LifestyleSummary? = null  // LifestyleViewModel → HealthRepository 직접 사용
+    fun getLifestyleSummary(): LifestyleSummary? = null // TODO(backend): 서버에서 라이프스타일 요약 로드
 
     fun getWeeklyGlucose(): List<Float> = emptyList()
 
-    // ── Lifestyle — LifestyleViewModel/DetailActivity에서 HealthRepository로 직접 조회 ──
+    // ── Lifestyle ────────────────────────────────────────────────────────────
 
-    fun getExerciseSummary(): ExerciseSummary? = null
-    fun getMealSummary(): MealSummary?         = null
-    fun getSleepSummary(): SleepSummary?       = null
+    fun getExerciseSummary(): ExerciseSummary? = null   // TODO(backend): 서버에서 운동 요약 로드
 
-    /** @deprecated HealthRepository.getWeeklyExerciseMinutes() 직접 사용 */
-    fun getWeeklyExerciseMinutes(): List<Int>  = emptyList()
+    fun getMealSummary(): MealSummary? = null           // TODO(backend): 서버에서 식사 요약 로드
 
-    /** @deprecated HealthRepository.getWeeklySleepHours() 직접 사용 */
-    fun getWeeklySleepHours(): List<Float>     = emptyList()
+    fun getSleepSummary(): SleepSummary? = null         // TODO(backend): 서버에서 수면 요약 로드
+
+    /** 주간 운동 시간 (분, 오늘=마지막) */
+    fun getWeeklyExerciseMinutes(): List<Int> = emptyList()
+
+    /** 주간 수면 시간 (시간, 오늘=마지막) */
+    fun getWeeklySleepHours(): List<Float> = emptyList()
 
     // ── Pain Records ─────────────────────────────────────────────────────────
 
@@ -84,7 +86,7 @@ object MockDataProvider {
         return AIAnalysisResult(
             painRecord     = record,
             summary        = "${partLabel} 통증 패턴 분석 결과, 최근 혈당 변동 및 수면 부족과의 연관성이 감지되었습니다. " +
-                             "통증 강도 ${record.intensity}/5 수준으로 지속적인 모니터링이 권장됩니다.",
+                             "통증 강도 ${record.intensity}/10 수준으로 지속적인 모니터링이 권장됩니다.",
             correlations   = correlations,
             recommendation = "규칙적인 스트레칭과 충분한 수면(7~8시간)을 유지하세요. " +
                              "혈당을 안정적으로 관리하면 신경 관련 통증 완화에 도움이 될 수 있습니다. " +

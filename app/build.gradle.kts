@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.checkdang.app"
-    compileSdk = 35
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.checkdang.app"
@@ -59,6 +59,4 @@ dependencies {
     implementation(libs.mpandroidchart)
     implementation(libs.play.services.auth)
     implementation(libs.kakao.user)
-    // Android Health Connect — 삼성 헬스가 One UI 6.0+ 기기에서 자동 동기화됨
-    implementation("androidx.health.connect:connect-client:1.1.0-alpha10")
 }

@@ -27,6 +27,15 @@
     <fragment
         android:id="@+id/nav_menu"
         android:name="com.checkdang.app.ui.menu.MenuFragment"
-        android:label="메뉴" />
+        android:label="메뉴">
+        <action
+            android:id="@+id/action_menu_to_profile_edit"
+            app:destination="@id/nav_profile_edit" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_profile_edit"
+        android:name="com.checkdang.app.ui.profile.ProfileEditFragment"
+        android:label="프로필 수정" />
 
 </navigation>

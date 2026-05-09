@@ -21,6 +21,7 @@ import com.checkdang.app.data.mock.SocialProvider
 import com.checkdang.app.data.mock.UserStore
 import com.checkdang.app.data.mock.UserTier
 import com.checkdang.app.data.remote.AuthApiClient
+import com.checkdang.app.data.remote.ProfileApiClient
 import com.checkdang.app.databinding.ActivityLoginBinding
 import com.checkdang.app.databinding.DialogSocialLoadingBinding
 import com.checkdang.app.ui.auth.onboarding.OnboardingActivity
@@ -182,12 +183,25 @@ class LoginActivity : AppCompatActivity() {
                 SessionHolder.socialEmail    = result.email ?: email
                 SessionHolder.socialNickname = result.name  ?: nickname
                 android.util.Log.d("SocialLogin", "✅ API 성공 | userId=${result.userId} | token=${result.accessToken.take(20)}…")
+
+                val profile = runCatching {
+                    ProfileApiClient.fetchProfile(result.accessToken)
+                }.getOrNull()
+
+                if (profile != null) {
+                    SessionHolder.currentProfile = profile
+                    android.util.Log.d("SocialLogin", "✅ 프로필 로드 성공 | nickname=${profile.nickname}")
+                } else {
+                    SessionHolder.currentProfile = UserStore.getProfile(socialProvider)
+                    android.util.Log.d("SocialLogin", "⚠️ 프로필 로드 실패 → 로컬 프로필 또는 null 사용")
+                }
             } else {
                 SessionHolder.accessToken    = "mock_access_token"
                 SessionHolder.refreshToken   = "mock_refresh_token"
                 SessionHolder.userId         = "mock_user_id"
                 SessionHolder.socialEmail    = email
                 SessionHolder.socialNickname = nickname
+                SessionHolder.currentProfile  = UserStore.getProfile(socialProvider)
                 android.util.Log.d("SocialLogin", "⚠️ API 실패 → Mock 사용 | 원인: ${apiResult.exceptionOrNull()?.message}")
             }
 
