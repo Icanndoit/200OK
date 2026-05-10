@@ -55,6 +55,15 @@ jwt:
 oauth2:
   redirect-uri: ${OAUTH2_REDIRECT_URI}
 
+kakao:
+  pay:
+    secret-key: ${KAKAO_PAY_SECRET_KEY}
+    cid: ${KAKAO_PAY_CID:TC0ONETIME}
+    approval-url: ${KAKAO_PAY_APPROVAL_URL}
+    cancel-url: ${KAKAO_PAY_CANCEL_URL}
+    fail-url: ${KAKAO_PAY_FAIL_URL}
+    premium-price: ${KAKAO_PAY_PREMIUM_PRICE:9900}
+
 aws:
   region: ${AWS_REGION}
   credentials:

@@ -41,7 +41,9 @@ public class SecurityConfig {
                                 "/login/oauth2/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "/api/payment/kakao/cancel",
+                                "/api/payment/kakao/fail"
                         ).permitAll()
                         // 비회원(GUEST) + 일반 회원 모두 접근 가능 (홈, 혈당기록)
                         .requestMatchers(
