@@ -9,10 +9,12 @@ import com.checkdang.dto.KakaoPayReadyResponse;
 import com.checkdang.repository.PaymentRecordRepository;
 import com.checkdang.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
@@ -22,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class KakaoPayService {
@@ -161,7 +164,11 @@ public class KakaoPayService {
             return response.getBody();
         } catch (IllegalArgumentException e) {
             throw e;
+        } catch (HttpClientErrorException e) {
+            log.error("카카오페이 {} 실패 - status: {}, body: {}", action, e.getStatusCode(), e.getResponseBodyAsString());
+            throw new IllegalArgumentException("카카오페이 " + action + "에 실패했습니다.");
         } catch (Exception e) {
+            log.error("카카오페이 {} 실패 - {}", action, e.getMessage());
             throw new IllegalArgumentException("카카오페이 " + action + "에 실패했습니다.");
         }
     }
