@@ -1,6 +1,7 @@
 package com.checkdang.config;
 
 import com.checkdang.domain.BloodSugarRecord;
+import com.checkdang.domain.PaymentRecord;
 import com.checkdang.domain.RefreshToken;
 import com.checkdang.domain.User;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +43,9 @@ public class DynamoDbConfig {
 
     @Value("${aws.dynamodb.blood-sugar-table-name}")
     private String bloodSugarTableName;
+
+    @Value("${aws.dynamodb.payment-table-name}")
+    private String paymentTableName;
 
     @Bean
     public DynamoDbClient dynamoDbClient() {
@@ -224,5 +228,56 @@ public class DynamoDbConfig {
                 .build();
 
         return enhancedClient.table(bloodSugarTableName, schema);
+    }
+
+    @Bean
+    public DynamoDbTable<PaymentRecord> paymentTable(DynamoDbEnhancedClient enhancedClient) {
+        StaticTableSchema<PaymentRecord> schema = StaticTableSchema.builder(PaymentRecord.class)
+                .newItemSupplier(PaymentRecord::new)
+                .addAttribute(String.class, a -> a
+                        .name("userId")
+                        .getter(PaymentRecord::getUserId)
+                        .setter(PaymentRecord::setUserId)
+                        .tags(StaticAttributeTags.primaryPartitionKey()))
+                .addAttribute(String.class, a -> a
+                        .name("orderId")
+                        .getter(PaymentRecord::getOrderId)
+                        .setter(PaymentRecord::setOrderId)
+                        .tags(StaticAttributeTags.primarySortKey()))
+                .addAttribute(String.class, a -> a
+                        .name("paymentMethod")
+                        .getter(PaymentRecord::getPaymentMethod)
+                        .setter(PaymentRecord::setPaymentMethod))
+                .addAttribute(String.class, a -> a
+                        .name("tid")
+                        .getter(PaymentRecord::getTid)
+                        .setter(PaymentRecord::setTid))
+                .addAttribute(String.class, a -> a
+                        .name("itemName")
+                        .getter(PaymentRecord::getItemName)
+                        .setter(PaymentRecord::setItemName))
+                .addAttribute(Integer.class, a -> a
+                        .name("amount")
+                        .getter(PaymentRecord::getAmount)
+                        .setter(PaymentRecord::setAmount))
+                .addAttribute(String.class, a -> a
+                        .name("status")
+                        .getter(PaymentRecord::getStatus)
+                        .setter(PaymentRecord::setStatus))
+                .addAttribute(Integer.class, a -> a
+                        .name("premiumMonths")
+                        .getter(PaymentRecord::getPremiumMonths)
+                        .setter(PaymentRecord::setPremiumMonths))
+                .addAttribute(String.class, a -> a
+                        .name("approvedAt")
+                        .getter(PaymentRecord::getApprovedAt)
+                        .setter(PaymentRecord::setApprovedAt))
+                .addAttribute(String.class, a -> a
+                        .name("createdAt")
+                        .getter(PaymentRecord::getCreatedAt)
+                        .setter(PaymentRecord::setCreatedAt))
+                .build();
+
+        return enhancedClient.table(paymentTableName, schema);
     }
 }

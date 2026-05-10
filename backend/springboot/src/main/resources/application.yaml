@@ -9,18 +9,16 @@ spring:
     password: ${RDS_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      initialization-fail-timeout: 0
+      initialization-fail-timeout: -1
+      connection-timeout: 5000
 
   jpa:
     hibernate:
-      # 테이블 자동 생성을 위해 update로 설정
-      ddl-auto: update
+      ddl-auto: none
     properties:
       hibernate:
-        # MySQL 8 버전에 맞게 수정
         dialect: org.hibernate.dialect.MySQL8Dialect
-    # SQL 실행 로그를 보기 위해 true로 설정
-    show-sql: true
+    show-sql: false
 
   security:
     oauth2:
@@ -74,6 +72,7 @@ aws:
     table-name: users
     refresh-token-table-name: refresh_tokens
     blood-sugar-table-name: blood_glucose_record
+    payment-table-name: payment_records
 
 server:
   port: ${PORT:8080}

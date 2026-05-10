@@ -13,11 +13,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
@@ -59,7 +57,6 @@ public class KakaoPayService {
         return paymentRecordRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
     }
 
-    @Transactional
     public KakaoPayReadyResponse ready(String userEmail, KakaoPayReadyRequest request) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -83,18 +80,18 @@ public class KakaoPayService {
         body.put("fail_url", failUrl);
 
         Map<String, Object> kakaoResponse = callKakaoApi(KAKAO_READY_URL, body, "결제 준비");
-
         String tid = (String) kakaoResponse.get("tid");
 
         paymentRecordRepository.save(PaymentRecord.builder()
                 .userId(user.getId())
-                .paymentMethod(PaymentRecord.PaymentMethod.KAKAO_PAY)
+                .paymentMethod(PaymentRecord.PaymentMethod.KAKAO_PAY.name())
                 .tid(tid)
                 .orderId(orderId)
                 .itemName(itemName)
                 .amount(amount)
-                .status(PaymentRecord.PaymentStatus.READY)
+                .status(PaymentRecord.PaymentStatus.READY.name())
                 .premiumMonths(months)
+                .createdAt(Instant.now().toString())
                 .build());
 
         return KakaoPayReadyResponse.builder()
@@ -105,18 +102,14 @@ public class KakaoPayService {
                 .build();
     }
 
-    @Transactional
     public KakaoPayApproveResponse approve(String userEmail, KakaoPayApproveRequest request) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         PaymentRecord record = paymentRecordRepository
-                .findByOrderIdAndStatus(request.getOrderId(), PaymentRecord.PaymentStatus.READY)
+                .findByUserIdAndOrderIdAndStatus(
+                        user.getId(), request.getOrderId(), PaymentRecord.PaymentStatus.READY)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 주문입니다."));
-
-        if (!record.getUserId().equals(user.getId())) {
-            throw new IllegalArgumentException("유효하지 않은 주문입니다.");
-        }
 
         Map<String, Object> body = new HashMap<>();
         body.put("cid", cid);
@@ -125,15 +118,14 @@ public class KakaoPayService {
         body.put("partner_user_id", user.getId());
         body.put("pg_token", request.getPgToken());
 
-        // 예외 발생 시 @Transactional이 전체 롤백 → PaymentRecord는 READY 상태로 유지 (재시도 가능)
+        // 예외 발생 시 DynamoDB putItem은 롤백 없음 → READY 상태 유지 (재시도 가능)
         callKakaoApi(KAKAO_APPROVE_URL, body, "결제 승인");
 
-        LocalDateTime approvedAt = LocalDateTime.now();
-        record.setStatus(PaymentRecord.PaymentStatus.APPROVED);
+        String approvedAt = Instant.now().toString();
+        record.setStatus(PaymentRecord.PaymentStatus.APPROVED.name());
         record.setApprovedAt(approvedAt);
         paymentRecordRepository.save(record);
 
-        // 기존 프리미엄 남은 기간이 있으면 연장, 없으면 현재 시점부터 기산
         Instant baseTime = (user.getPremiumExpiresAt() != null && user.getPremiumExpiresAt().isAfter(Instant.now()))
                 ? user.getPremiumExpiresAt()
                 : Instant.now();
