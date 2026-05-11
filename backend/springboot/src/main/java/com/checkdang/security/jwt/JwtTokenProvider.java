@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtTokenProvider {
@@ -26,6 +27,18 @@ public class JwtTokenProvider {
         Date now = new Date();
         return Jwts.builder()
                 .subject(email)
+                .claim("isGuest", false)
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + expiration))
+                .signWith(secretKey)
+                .compact();
+    }
+
+    public String generateGuestToken() {
+        Date now = new Date();
+        return Jwts.builder()
+                .subject("guest_" + UUID.randomUUID())
+                .claim("isGuest", true)
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + expiration))
                 .signWith(secretKey)
@@ -34,6 +47,10 @@ public class JwtTokenProvider {
 
     public String getEmailFromToken(String token) {
         return getClaims(token).getSubject();
+    }
+
+    public boolean isGuestToken(String token) {
+        return Boolean.TRUE.equals(getClaims(token).get("isGuest", Boolean.class));
     }
 
     public boolean validateToken(String token) {
