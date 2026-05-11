@@ -13,6 +13,7 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.androidpublisher.AndroidPublisher;
 import com.google.api.services.androidpublisher.model.SubscriptionPurchase;
+import com.google.api.services.androidpublisher.model.SubscriptionPurchasesAcknowledgeRequest;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
@@ -84,6 +85,7 @@ public class GooglePlayBillingService {
                 .build());
 
         activatePremium(user, premiumExpiresAt);
+        acknowledgeIfNeeded(subscriptionId, request.getPurchaseToken(), purchase);
 
         return GooglePlayVerifyResponse.builder()
                 .orderId(purchase.getOrderId())
@@ -175,6 +177,26 @@ public class GooglePlayBillingService {
         user.setPremiumExpiresAt(null);
         userRepository.save(user);
         log.info("프리미엄 비활성화 — userId: {}", user.getId());
+    }
+
+    // 구매 확인(Acknowledge) — 미확인 상태면 Google이 3일 후 자동 환불
+    // acknowledgementState: 0=미확인, 1=확인완료
+    private void acknowledgeIfNeeded(String subscriptionId, String purchaseToken,
+                                     SubscriptionPurchase purchase) {
+        if (purchase.getAcknowledgementState() != null && purchase.getAcknowledgementState() == 1) {
+            return; // 이미 확인 완료
+        }
+        try {
+            buildPublisher().purchases().subscriptions()
+                    .acknowledge(packageName, subscriptionId, purchaseToken,
+                            new SubscriptionPurchasesAcknowledgeRequest())
+                    .execute();
+            log.info("구매 확인(Acknowledge) 완료 — purchaseToken: {}", purchaseToken);
+        } catch (Exception e) {
+            // Acknowledge 실패는 치명적이지 않음 — 이미 프리미엄 부여 완료 상태
+            // Google이 재시도하거나 RTDN으로 다시 알려줌
+            log.error("구매 확인(Acknowledge) 실패: {}", e.getMessage());
+        }
     }
 
     private SubscriptionPurchase fetchSubscription(String subscriptionId, String purchaseToken) {
