@@ -3,6 +3,9 @@ WORKDIR /app
 COPY backend/springboot/ .
 RUN ./gradlew build -x test
 
+# 실행 권한 부여 단계 추가
+RUN chmod +x gradlew
+
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=build /app/build/libs/checkdang-0.0.1-SNAPSHOT.jar app.jar
