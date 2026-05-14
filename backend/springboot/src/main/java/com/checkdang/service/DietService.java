@@ -29,10 +29,10 @@ public class DietService {
 
         int saved = 0;
         for (DietSyncRequest req : requests) {
-            if (isDuplicate(user.getId(), req)) continue;
+            if (isDuplicate(String.valueOf(user.getId()), req)) continue;
 
             dietRepository.save(Diet.builder()
-                    .userId(user.getId())
+                    .userId(String.valueOf(user.getId()))
                     .sourceId(req.getSourceId())
                     .mealType(req.getMealType())
                     .foodName(req.getFoodName())
@@ -57,7 +57,7 @@ public class DietService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         return dietRepository
-                .findByUserIdAndRecordedAtBetweenOrderByRecordedAtDesc(user.getId(), from, to)
+                .findByUserIdAndRecordedAtBetweenOrderByRecordedAtDesc(String.valueOf(user.getId()), from, to)
                 .stream()
                 .map(DietResponse::from)
                 .toList();
@@ -67,7 +67,6 @@ public class DietService {
         if (req.getSourceId() != null) {
             return dietRepository.existsByUserIdAndSourceId(userId, req.getSourceId());
         }
-        return dietRepository.existsByUserIdAndRecordedAtAndFoodName(
-                userId, req.getRecordedAt(), req.getFoodName());
+        return dietRepository.existsByUserIdAndRecordedAtAndFoodName(userId, req.getRecordedAt(), req.getFoodName());
     }
 }

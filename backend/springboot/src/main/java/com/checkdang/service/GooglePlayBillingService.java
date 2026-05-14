@@ -72,7 +72,7 @@ public class GooglePlayBillingService {
         String now = Instant.now().toString();
 
         paymentRecordRepository.save(PaymentRecord.builder()
-                .userId(user.getId())
+                .userId(String.valueOf(user.getId()))
                 .orderId(request.getPurchaseToken()) // Google은 별도 orderId 없음, purchaseToken을 SK로 사용
                 .paymentMethod(PaymentRecord.PaymentMethod.GOOGLE_PLAY.name())
                 .tid(purchase.getOrderId())          // Google 내부 주문번호
@@ -143,7 +143,7 @@ public class GooglePlayBillingService {
         // orderId(=purchaseToken) scan으로 userId를 역조회 → User 프리미엄 갱신
         paymentRecordRepository.findByOrderId(purchaseToken)
                 .ifPresentOrElse(
-                        record -> userRepository.findByEmail(record.getUserId())
+                        record -> userRepository.findById(Long.parseLong(record.getUserId()))
                                 .ifPresent(user -> activatePremium(user, premiumExpiresAt)),
                         () -> log.warn("RTDN activation: purchaseToken에 해당하는 PaymentRecord 없음 — {}", purchaseToken)
                 );
@@ -153,7 +153,7 @@ public class GooglePlayBillingService {
         // orderId(=purchaseToken) scan으로 userId를 역조회 → User 프리미엄 해제
         paymentRecordRepository.findByOrderId(purchaseToken)
                 .ifPresentOrElse(
-                        record -> userRepository.findByEmail(record.getUserId())
+                        record -> userRepository.findById(Long.parseLong(record.getUserId()))
                                 .ifPresent(this::deactivatePremium),
                         () -> log.warn("RTDN deactivation: purchaseToken에 해당하는 PaymentRecord 없음 — {}", purchaseToken)
                 );

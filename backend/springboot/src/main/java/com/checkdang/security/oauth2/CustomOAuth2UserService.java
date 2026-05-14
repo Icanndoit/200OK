@@ -57,6 +57,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         .provider(finalProvider)
                         .providerId(finalProviderId)
                         .role(User.Role.PATIENT)
+                        .isGuest(false)
+                        .accountStatus(User.AccountStatus.ACTIVE)
                         .build())
         );
 

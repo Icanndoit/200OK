@@ -46,7 +46,7 @@ public class InsulinRecordService {
                 .dosage(request.getDosage())
                 .injectedAt(injectedAt)
                 .memo(request.getMemo())
-                .userId(user.getId())
+                .userId(String.valueOf(user.getId()))
                 .build();
 
         return InsulinRecordResponse.from(insulinRecordRepository.save(record));

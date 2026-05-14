@@ -57,7 +57,7 @@ public class KakaoPayService {
     public List<PaymentRecord> getHistory(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-        return paymentRecordRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+        return paymentRecordRepository.findByUserIdOrderByCreatedAtDesc(String.valueOf(user.getId()));
     }
 
     public KakaoPayReadyResponse ready(String userEmail, KakaoPayReadyRequest request) {
@@ -73,7 +73,7 @@ public class KakaoPayService {
         Map<String, Object> body = new HashMap<>();
         body.put("cid", cid);
         body.put("partner_order_id", orderId);
-        body.put("partner_user_id", user.getId());
+        body.put("partner_user_id", String.valueOf(user.getId()));
         body.put("item_name", itemName);
         body.put("quantity", 1);
         body.put("total_amount", amount);
@@ -86,7 +86,7 @@ public class KakaoPayService {
         String tid = (String) kakaoResponse.get("tid");
 
         paymentRecordRepository.save(PaymentRecord.builder()
-                .userId(user.getId())
+                .userId(String.valueOf(user.getId()))
                 .paymentMethod(PaymentRecord.PaymentMethod.KAKAO_PAY.name())
                 .tid(tid)
                 .orderId(orderId)
@@ -111,14 +111,14 @@ public class KakaoPayService {
 
         PaymentRecord record = paymentRecordRepository
                 .findByUserIdAndOrderIdAndStatus(
-                        user.getId(), request.getOrderId(), PaymentRecord.PaymentStatus.READY)
+                        String.valueOf(user.getId()), request.getOrderId(), PaymentRecord.PaymentStatus.READY)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 주문입니다."));
 
         Map<String, Object> body = new HashMap<>();
         body.put("cid", cid);
         body.put("tid", record.getTid());
         body.put("partner_order_id", record.getOrderId());
-        body.put("partner_user_id", user.getId());
+        body.put("partner_user_id", String.valueOf(user.getId()));
         body.put("pg_token", request.getPgToken());
 
         // 예외 발생 시 DynamoDB putItem은 롤백 없음 → READY 상태 유지 (재시도 가능)

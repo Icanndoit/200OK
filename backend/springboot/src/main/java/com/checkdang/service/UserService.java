@@ -17,12 +17,14 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
@@ -33,6 +35,7 @@ public class UserService implements UserDetailsService {
     @Value("${jwt.refresh-expiration}")
     private long refreshExpiration;
 
+    @Transactional
     public UserResponse signup(SignupRequest request) {
         if (!Boolean.TRUE.equals(request.getTermsAgreed())) {
             throw new IllegalArgumentException("이용약관에 동의해야 합니다.");
@@ -59,6 +62,7 @@ public class UserService implements UserDetailsService {
         return UserResponse.from(userRepository.save(user));
     }
 
+    @Transactional
     public TokenResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
@@ -68,11 +72,12 @@ public class UserService implements UserDetailsService {
         }
 
         String accessToken = jwtTokenProvider.generateToken(user.getEmail());
-        String refreshToken = createRefreshToken(user.getId());
+        String refreshToken = createRefreshToken(String.valueOf(user.getId()));
 
         return TokenResponse.of(accessToken, refreshToken, UserResponse.from(user));
     }
 
+    @Transactional
     public TokenResponse guestConvert(GuestConvertRequest request) {
         if (!Boolean.TRUE.equals(request.getTermsAgreed())) {
             throw new IllegalArgumentException("이용약관에 동의해야 합니다.");
@@ -94,11 +99,12 @@ public class UserService implements UserDetailsService {
 
         User savedUser = userRepository.save(user);
         String accessToken = jwtTokenProvider.generateToken(savedUser.getEmail());
-        String refreshToken = createRefreshToken(savedUser.getId());
+        String refreshToken = createRefreshToken(String.valueOf(savedUser.getId()));
 
         return TokenResponse.of(accessToken, refreshToken, UserResponse.from(savedUser));
     }
 
+    @Transactional
     public void logout(String refreshToken) {
         refreshTokenRepository.findByToken(refreshToken)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 토큰입니다."));

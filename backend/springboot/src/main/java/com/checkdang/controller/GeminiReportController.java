@@ -67,17 +67,17 @@ public class GeminiReportController {
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
 
         List<Diet> diets = dietRepository
-                .findByUserIdAndRecordedAtBetweenOrderByRecordedAtDesc(user.getId(), reportFrom, reportTo)
+                .findByUserIdAndRecordedAtBetweenOrderByRecordedAtDesc(String.valueOf(user.getId()), reportFrom, reportTo)
                 .stream()
                 .limit(MAX_ROWS_PER_SECTION)
                 .toList();
         List<Sleep> sleeps = sleepRepository
-                .findWithStagesByUserIdAndRange(user.getId(), reportFrom, reportTo)
+                .findWithStagesByUserIdAndRange(String.valueOf(user.getId()), reportFrom, reportTo)
                 .stream()
                 .limit(MAX_ROWS_PER_SECTION)
                 .toList();
         List<Exercise> exercises = exerciseRepository
-                .findByUserIdAndRecordedAtBetweenOrderByRecordedAtDesc(user.getId(), reportFrom, reportTo)
+                .findByUserIdAndRecordedAtBetweenOrderByRecordedAtDesc(String.valueOf(user.getId()), reportFrom, reportTo)
                 .stream()
                 .limit(MAX_ROWS_PER_SECTION)
                 .toList();

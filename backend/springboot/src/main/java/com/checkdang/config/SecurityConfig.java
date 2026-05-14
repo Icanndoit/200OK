@@ -46,10 +46,9 @@ public class SecurityConfig {
                                 "/api/payment/kakao/fail",
                                 "/api/payment/google/rtdn"  // Pub/Sub은 JWT 없이 호출
                         ).permitAll()
-                        // 비회원(GUEST) + 일반 회원 모두 접근 가능 (홈, 혈당기록)
+                        // 비회원(GUEST) + 일반 회원 모두 접근 가능 (홈 화면)
                         .requestMatchers(
-                                "/api/home/**",
-                                "/api/records/blood-sugar/**"
+                                "/api/home/**"
                         ).hasAnyRole("GUEST", "PATIENT", "CAREGIVER", "ADMIN")
                         // 인슐린 기록은 로그인 회원만
                         .requestMatchers(

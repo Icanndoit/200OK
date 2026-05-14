@@ -60,7 +60,7 @@ public class SocialLoginService {
                         User.Provider.valueOf(provider)));
 
         String accessToken  = jwtTokenProvider.generateToken(user.getEmail());
-        String refreshToken = createRefreshToken(user.getId());
+        String refreshToken = createRefreshToken(String.valueOf(user.getId()));
 
         return TokenResponse.of(accessToken, refreshToken, UserResponse.from(user));
     }

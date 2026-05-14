@@ -3,10 +3,10 @@ from typing import Optional
 
 
 class BloodGlucoseRecord(BaseModel):
-    user_date: str
-    timestamp: str
-    level: int
-    meal_timing: str
+    user_date: str   # PK: "{user_id}#{YYYY-MM-DD}"
+    timestamp: str   # SK: ISO-8601
+    level: int       # 혈당 수치 (mg/dL)
+    meal_timing: str # FASTING / BEFORE_MEAL / AFTER_MEAL / BEDTIME
     memo: Optional[str] = None
 
 
