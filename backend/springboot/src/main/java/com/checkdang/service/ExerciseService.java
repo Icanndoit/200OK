@@ -29,10 +29,10 @@ public class ExerciseService {
 
         int saved = 0;
         for (ExerciseSyncRequest req : requests) {
-            if (isDuplicate(user.getId(), req)) continue;
+            if (isDuplicate(String.valueOf(user.getId()), req)) continue;
 
             exerciseRepository.save(Exercise.builder()
-                    .userId(user.getId())
+                    .userId(String.valueOf(user.getId()))
                     .sourceId(req.getSourceId())
                     .exerciseName(req.getExerciseName())
                     .duration(req.getDuration())
@@ -53,7 +53,7 @@ public class ExerciseService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         return exerciseRepository
-                .findByUserIdAndRecordedAtBetweenOrderByRecordedAtDesc(user.getId(), from, to)
+                .findByUserIdAndRecordedAtBetweenOrderByRecordedAtDesc(String.valueOf(user.getId()), from, to)
                 .stream()
                 .map(ExerciseResponse::from)
                 .toList();

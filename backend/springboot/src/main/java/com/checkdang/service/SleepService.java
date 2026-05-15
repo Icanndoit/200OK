@@ -30,11 +30,11 @@ public class SleepService {
 
         int saved = 0;
         for (SleepSyncRequest req : requests) {
-            if (isDuplicate(user.getId(), req)) continue;
+            if (isDuplicate(String.valueOf(user.getId()), req)) continue;
 
             // sleep을 먼저 INSERT해 ID를 확보한 뒤 stages를 연관
             Sleep sleep = sleepRepository.save(Sleep.builder()
-                    .userId(user.getId())
+                    .userId(String.valueOf(user.getId()))
                     .sourceId(req.getSourceId())
                     .sleepTime(req.getSleepTime())
                     .wakeTime(req.getWakeTime())
@@ -74,7 +74,7 @@ public class SleepService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
 
         return sleepRepository
-                .findWithStagesByUserIdAndRange(user.getId(), from, to)
+                .findWithStagesByUserIdAndRange(String.valueOf(user.getId()), from, to)
                 .stream()
                 .map(SleepResponse::from)
                 .toList();

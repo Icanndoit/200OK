@@ -1,6 +1,7 @@
 package com.checkdang.config;
 
-import com.checkdang.domain.User;
+import com.checkdang.domain.PaymentRecord;
+import com.checkdang.domain.RefreshToken;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,14 +9,13 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.StaticTableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.StaticAttributeTags;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.StaticTableSchema;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 
 import java.net.URI;
-import java.time.Instant;
 
 @Configuration
 public class DynamoDbConfig {
@@ -32,8 +32,11 @@ public class DynamoDbConfig {
     @Value("${aws.dynamodb.endpoint:}")
     private String endpoint;
 
-    @Value("${aws.dynamodb.table-name}")
-    private String tableName;
+    @Value("${aws.dynamodb.refresh-token-table-name}")
+    private String refreshTokenTableName;
+
+    @Value("${aws.dynamodb.payment-table-name}")
+    private String paymentTableName;
 
     @Bean
     public DynamoDbClient dynamoDbClient() {
@@ -57,44 +60,79 @@ public class DynamoDbConfig {
     }
 
     @Bean
-    public DynamoDbTable<User> userTable(DynamoDbEnhancedClient enhancedClient) {
-        StaticTableSchema<User> schema = StaticTableSchema.builder(User.class)
-                .newItemSupplier(User::new)
+    public DynamoDbTable<RefreshToken> refreshTokenTable(DynamoDbEnhancedClient enhancedClient) {
+        StaticTableSchema<RefreshToken> schema = StaticTableSchema.builder(RefreshToken.class)
+                .newItemSupplier(RefreshToken::new)
                 .addAttribute(String.class, a -> a
-                        .name("email")
-                        .getter(User::getEmail)
-                        .setter(User::setEmail)
+                        .name("token")
+                        .getter(RefreshToken::getToken)
+                        .setter(RefreshToken::setToken)
                         .tags(StaticAttributeTags.primaryPartitionKey()))
                 .addAttribute(String.class, a -> a
-                        .name("id")
-                        .getter(User::getId)
-                        .setter(User::setId))
-                .addAttribute(String.class, a -> a
-                        .name("password")
-                        .getter(User::getPassword)
-                        .setter(User::setPassword))
-                .addAttribute(String.class, a -> a
-                        .name("name")
-                        .getter(User::getName)
-                        .setter(User::setName))
-                .addAttribute(String.class, a -> a
-                        .name("role")
-                        .getter(u -> u.getRole() != null ? u.getRole().name() : null)
-                        .setter((u, v) -> u.setRole(v != null ? User.Role.valueOf(v) : null)))
-                .addAttribute(String.class, a -> a
-                        .name("provider")
-                        .getter(u -> u.getProvider() != null ? u.getProvider().name() : null)
-                        .setter((u, v) -> u.setProvider(v != null ? User.Provider.valueOf(v) : null)))
-                .addAttribute(String.class, a -> a
-                        .name("providerId")
-                        .getter(User::getProviderId)
-                        .setter(User::setProviderId))
+                        .name("userId")
+                        .getter(RefreshToken::getUserId)
+                        .setter(RefreshToken::setUserId))
+                .addAttribute(Long.class, a -> a
+                        .name("expiresAt")
+                        .getter(RefreshToken::getExpiresAt)
+                        .setter(RefreshToken::setExpiresAt))
                 .addAttribute(String.class, a -> a
                         .name("createdAt")
-                        .getter(u -> u.getCreatedAt() != null ? u.getCreatedAt().toString() : null)
-                        .setter((u, v) -> u.setCreatedAt(v != null ? Instant.parse(v) : null)))
+                        .getter(RefreshToken::getCreatedAt)
+                        .setter(RefreshToken::setCreatedAt))
                 .build();
 
-        return enhancedClient.table(tableName, schema);
+        return enhancedClient.table(refreshTokenTableName, schema);
+    }
+
+    @Bean
+    public DynamoDbTable<PaymentRecord> paymentTable(DynamoDbEnhancedClient enhancedClient) {
+        StaticTableSchema<PaymentRecord> schema = StaticTableSchema.builder(PaymentRecord.class)
+                .newItemSupplier(PaymentRecord::new)
+                .addAttribute(String.class, a -> a
+                        .name("userId")
+                        .getter(PaymentRecord::getUserId)
+                        .setter(PaymentRecord::setUserId)
+                        .tags(StaticAttributeTags.primaryPartitionKey()))
+                .addAttribute(String.class, a -> a
+                        .name("orderId")
+                        .getter(PaymentRecord::getOrderId)
+                        .setter(PaymentRecord::setOrderId)
+                        .tags(StaticAttributeTags.primarySortKey()))
+                .addAttribute(String.class, a -> a
+                        .name("paymentMethod")
+                        .getter(PaymentRecord::getPaymentMethod)
+                        .setter(PaymentRecord::setPaymentMethod))
+                .addAttribute(String.class, a -> a
+                        .name("tid")
+                        .getter(PaymentRecord::getTid)
+                        .setter(PaymentRecord::setTid))
+                .addAttribute(String.class, a -> a
+                        .name("itemName")
+                        .getter(PaymentRecord::getItemName)
+                        .setter(PaymentRecord::setItemName))
+                .addAttribute(Integer.class, a -> a
+                        .name("amount")
+                        .getter(PaymentRecord::getAmount)
+                        .setter(PaymentRecord::setAmount))
+                .addAttribute(String.class, a -> a
+                        .name("status")
+                        .getter(PaymentRecord::getStatus)
+                        .setter(PaymentRecord::setStatus))
+                .addAttribute(Integer.class, a -> a
+                        .name("premiumMonths")
+                        .getter(PaymentRecord::getPremiumMonths)
+                        .setter(PaymentRecord::setPremiumMonths))
+                .addAttribute(String.class, a -> a
+                        .name("approvedAt")
+                        .getter(PaymentRecord::getApprovedAt)
+                        .setter(PaymentRecord::setApprovedAt))
+                .addAttribute(String.class, a -> a
+                        .name("createdAt")
+                        .getter(PaymentRecord::getCreatedAt)
+                        .setter(PaymentRecord::setCreatedAt))
+                .build();
+
+        return enhancedClient.table(paymentTableName, schema);
     }
 }
