@@ -20,16 +20,9 @@ public class AiAnalysisClient {
 
     public String analyzeDiet(List<DietResponse> diets) {
         Map<String, Object> requestBody = Map.of("diets", diets);
-        return requestAnswer("/analyze/diet", requestBody);
-    }
 
-    public String analyzeHealthReport(Map<String, Object> reportData) {
-        return requestAnswer("/analyze/health-report", reportData);
-    }
-
-    private String requestAnswer(String path, Map<String, Object> requestBody) {
         Map<?, ?> response = restClient.post()
-                .uri(aiServerUrl + path)
+                .uri(aiServerUrl + "/analyze/diet")
                 .body(requestBody)
                 .retrieve()
                 .body(Map.class);

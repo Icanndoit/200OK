@@ -13,6 +13,8 @@ import com.checkdang.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -59,5 +61,18 @@ public class UserController {
     @PostMapping("/guest")
     public ResponseEntity<ApiResponse<TokenResponse>> guestLogin() {
         return ResponseEntity.ok(ApiResponse.ok(userService.generateGuestToken()));
+    }
+
+    // Cognito 소셜 로그인 — 프론트가 Cognito에서 받은 ID Token을 Authorization 헤더로 전송
+    // Body 없음. DB에 유저 없으면 생성, 있으면 name 업데이트 후 UserResponse 반환
+    // /api/auth/** 는 permitAll이므로 이 엔드포인트 자체는 인증 없이 접근 가능하나,
+    // oauth2ResourceServer가 Authorization 헤더의 Cognito JWT를 검증한 뒤 Jwt 객체를 주입
+    @PostMapping("/social-login")
+    public ResponseEntity<ApiResponse<UserResponse>> socialLoginWithCognito(
+            @AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
+            throw new IllegalArgumentException("Cognito ID Token이 필요합니다.");
+        }
+        return ResponseEntity.ok(ApiResponse.ok(userService.socialLoginWithCognito(jwt)));
     }
 }
