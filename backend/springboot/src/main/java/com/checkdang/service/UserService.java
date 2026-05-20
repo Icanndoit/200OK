@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -118,6 +119,54 @@ public class UserService implements UserDetailsService {
     public TokenResponse generateGuestToken() {
         String token = jwtTokenProvider.generateGuestToken();
         return TokenResponse.ofGuest(token);
+    }
+
+    // Cognito ID Token으로 소셜 로그인 처리
+    // cognito:username 클레임으로 provider 판별, email 클레임으로 사용자 조회/생성
+    // 팀원 백엔드 스펙 동일: DB에 없으면 INSERT, 있으면 name UPDATE 후 UserResponse 반환
+    @Transactional
+    public UserResponse socialLoginWithCognito(Jwt jwt) {
+        String email = jwt.getClaimAsString("email");
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Cognito 토큰에 email 클레임이 없습니다.");
+        }
+
+        String name = jwt.getClaimAsString("name");
+        if (name == null || name.isBlank()) {
+            name = email.split("@")[0];
+        }
+
+        User.Provider provider = resolveProvider(jwt);
+
+        final String finalName = name;
+        final User.Provider finalProvider = provider;
+
+        User user = userRepository.findByEmail(email)
+                .map(existing -> {
+                    existing.setName(finalName);
+                    return userRepository.save(existing);
+                })
+                .orElseGet(() -> userRepository.save(User.builder()
+                        .email(email)
+                        .name(finalName)
+                        .provider(finalProvider)
+                        .role(User.Role.PATIENT)
+                        .isGuest(false)
+                        .accountStatus(User.AccountStatus.ACTIVE)
+                        .build()));
+
+        return UserResponse.from(user);
+    }
+
+    // cognito:username prefix로 소셜 provider 판별
+    // Google_xxx → GOOGLE, KakaoOIDC_xxx → KAKAO, 그 외 → LOCAL
+    private User.Provider resolveProvider(Jwt jwt) {
+        String username = jwt.getClaimAsString("cognito:username");
+        if (username != null) {
+            if (username.startsWith("Google_")) return User.Provider.GOOGLE;
+            if (username.startsWith("KakaoOIDC_")) return User.Provider.KAKAO;
+        }
+        return User.Provider.LOCAL;
     }
 
     private String createRefreshToken(String userId) {

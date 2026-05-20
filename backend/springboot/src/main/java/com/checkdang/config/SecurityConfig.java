@@ -13,6 +13,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -62,6 +64,12 @@ public class SecurityConfig {
                                 .userService(customOAuth2UserService))
                         .successHandler(oAuth2SuccessHandler)
                 )
+                // Cognito ID Token 검증 (소셜 로그인 경로)
+                // 자체 HS256 JWT(로컬 로그인)는 JwtAuthenticationFilter가 먼저 처리하므로
+                // Cognito RS256 JWT가 온 경우에만 이 검증기가 동작
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(cognitoJwtConverter()))
+                )
                 .addFilterBefore(
                         new RateLimitFilter(),
                         UsernamePasswordAuthenticationFilter.class
@@ -72,5 +80,26 @@ public class SecurityConfig {
                 );
 
         return http.build();
+    }
+
+    // Cognito JWT의 cognito:groups 클레임을 Spring Security ROLE_xxx 권한으로 변환
+    // cognito:groups가 없는 경우(소셜 로그인 일반 사용자)는 기본 ROLE_PATIENT 부여
+    @Bean
+    public JwtAuthenticationConverter cognitoJwtConverter() {
+        JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        authoritiesConverter.setAuthoritiesClaimName("cognito:groups");
+        authoritiesConverter.setAuthorityPrefix("ROLE_");
+
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            var authorities = authoritiesConverter.convert(jwt);
+            if (authorities == null || authorities.isEmpty()) {
+                return java.util.List.of(
+                        new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_PATIENT")
+                );
+            }
+            return authorities;
+        });
+        return converter;
     }
 }
